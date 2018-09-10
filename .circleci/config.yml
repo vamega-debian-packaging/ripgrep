@@ -1,0 +1,29 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: vamega/build-image:latest
+    steps:
+      - checkout
+      - run:
+          name: Decrypt Bintray credentials
+          command: |
+            echo ${SCRYPT_KEY} | scrypt dec -P /root/.jfrog/jfrog-cli.conf.enc /root/.jfrog/jfrog-cli.conf
+      - run:
+          name: Create deb
+          command: bash create.sh
+      - run:
+          name: Display deb details
+          command: |
+            dpkg-deb --info *.deb
+            dpkg-deb -c *.deb
+      - run:
+          name: Upload package to repo
+          command: bash upload.sh
+
+workflows:
+  version: 2
+  build: # Workflow name
+    jobs:
+      - build:
+          context: debian-packaging
